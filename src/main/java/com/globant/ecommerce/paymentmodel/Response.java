@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
-
+/**
+ * 
+ * @author pravin.dake
+ * this class is used to send the JSON Resopnse.
+ */
 public class Response {
 	
 	private String Message;

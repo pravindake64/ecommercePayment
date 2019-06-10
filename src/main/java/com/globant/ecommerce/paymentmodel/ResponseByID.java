@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
-
+/**
+ * 
+ * @author pravin.dake
+ * this method is used to send JSON response
+ */
 public class ResponseByID {
 	
 	private String Message;

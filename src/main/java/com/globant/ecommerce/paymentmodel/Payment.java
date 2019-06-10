@@ -3,7 +3,11 @@ package com.globant.ecommerce.paymentmodel;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
-
+/**
+ * 
+ * @author pravin.dake
+ *
+ */
 @Entity
 public class Payment {
 	@javax.persistence.Id

@@ -87,7 +87,7 @@ public class PaymentDAOImpl implements PaymentDAO {
 		return 1;
 	}
 
-	// if the getrefund is successfully executed,then only this method get called
+	// if the getrefund() is successfully executed,then only this method get called
 	@Override
 	public int modifyRefundStatus(long transactionid) {
 		final String sql = "update refund set refundstatus=1 where transactionid=? ";

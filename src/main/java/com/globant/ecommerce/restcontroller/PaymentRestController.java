@@ -5,6 +5,10 @@ import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +19,10 @@ import com.globant.ecommerce.paymentdao.PaymentDAOImpl;
 import com.globant.ecommerce.paymentfacade.PaymentFacadeImpl;
 import com.globant.ecommerce.paymentmodel.Response;
 import com.globant.ecommerce.paymentmodel.ResponseByID;
+import com.netflix.client.http.HttpResponse;
+
+import springfox.documentation.swagger.readers.operation.ResponseHeaders;
+
 import com.globant.ecommerce.paymentmodel.Payment;
 import com.globant.ecommerce.paymentmodel.Refund;
 
@@ -24,15 +32,20 @@ public class PaymentRestController {
 	private PaymentFacadeImpl payimpl;
 
 	@PostMapping("/order/payment")
-	public Response makePayment(@RequestBody String data,
-			@RequestHeader(value = "authToken", defaultValue = "") String authToken) throws JSONException {
-		Response resp = new Response();
+	public ResponseEntity<Map<String, String>> makePayment(@RequestBody String data,
+			@RequestHeader(value = "authToken", defaultValue = "") String authToken)
+					throws JSONException {//   (, ResponseHeaders req)
+			
+		//Response resp = new Response();
+		HttpHeaders header = new HttpHeaders();
+		Payment payment = new Payment();
+		Map<String, String> res = new HashMap<String, String>();
+
 		if (payimpl.authenticate(authToken)) {
 			JSONObject jo = null;
 			JSONObject jcard = null;
 			JSONObject netbanking = null;
-			Payment payment = new Payment();
-			Map<String, String> res = new HashMap<String, String>();
+
 			jo = new JSONObject(data);
 			payment.setUserid(jo.getInt("userid"));
 			payment.setOrderid(jo.getInt("orderid"));
@@ -56,61 +69,61 @@ public class PaymentRestController {
 			if (n != 1) {
 				res.put("paymentstatus", "terminated");
 				res.put("trasactionid", transactionid + "");
-				resp.setMessage("Payment UnSuccessful");
-				resp.setStatus(400);
-				resp.setData(res);
+				//resp.setMessage("Payment UnSuccessful");
+				//resp.setStatus(400);
+				header.add("messgae", "Payment Unsuccessfull");
+				//resp.setData(res);
+				return new ResponseEntity<>(res, header, HttpStatus.BAD_REQUEST);
 			} else {
 				payimpl.updatePaymentStatus(transactionid);
 				res.put("trasactionid", transactionid + "");
-				res.put("paymentstatus", "Done");
-				resp.setMessage("Payment Successful");
-				resp.setStatus(200);
-				resp.setData(res);
+				res.put("paymentstatus", "Completed");
+				// resp.setMessage("Payment Successful");
+				// resp.setStatus(200);
+				// resp.setData(res);
+				header.add("message", "Payment successfull");
+				return new ResponseEntity<>(res, header, HttpStatus.OK);
 			}
 
-			return resp;
 		}
-
-		resp.setMessage("User Not Logged In");
-		resp.setStatus(401);
-		return resp;
+		header.add("message", "User not loged in");
+		//resp.setMessage("User Not Logged In");
+		//resp.setStatus(401);
+		return new ResponseEntity<>(res, header, HttpStatus.UNAUTHORIZED);
 	}
 
 	@GetMapping("/order/payment/{transactionid}")
-	public ResponseByID getPayDetailsById(@PathVariable("transactionid") long transactionid,
+	public ResponseEntity<Payment> getPayDetailsById(@PathVariable("transactionid") long transactionid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken) throws Exception {
 
-		ResponseByID resp = new ResponseByID();
+		//ResponseByID resp = new ResponseByID();
+		HttpHeaders header = new HttpHeaders();
+		Payment paymentdata = null;
 		if (payimpl.authenticate(authToken)) {
-			Payment paymentdata = null;
 			paymentdata = payimpl.getPayDeatilsById(transactionid);
 			if (paymentdata.equals(null)) {
-				resp.setMessage("Record not found");
-				resp.setStatus(400);
-				resp.setData(paymentdata);
+				header.add("message", "Record not found");
+				return new ResponseEntity<>(paymentdata, header, HttpStatus.BAD_REQUEST);
 			} else {
-				resp.setMessage("Record Fetched Successful");
-				resp.setStatus(200);
-				resp.setData(paymentdata);
+				header.add("message", "Record Fetched Successful");
+				return new ResponseEntity<>(paymentdata, header, HttpStatus.OK);
 			}
-			return resp;
-
 		}
-		resp.setMessage("User Not Logged In");
-		resp.setStatus(401);
-		return resp;
+		header.add("message", "User not loged in ");
+		return new ResponseEntity<>(paymentdata, header, HttpStatus.OK);
 	}
 
 	@PostMapping("/order/payment/refund")
-	public Response getRefund(@RequestBody String data,
+	public ResponseEntity<Map<String, String>> getRefund(@RequestBody String data,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken) throws JSONException {
-		Response res = new Response();
+		//Response res = new Response();
+		HttpHeaders header =new HttpHeaders();
+		Map<String, String> refunddata = new HashMap<String, String>();
 		if (payimpl.authenticate(authToken)) {
 			Refund refund = new Refund();
 			JSONObject refdata = null;
 			refdata = new JSONObject(data);
-			Map<String, String> refunddata = new HashMap<String, String>();
-
+			
 			refund.setTransactionid(refdata.getLong("transactionid"));
 			refund.setBankname(refdata.getString("bankname"));
 			refund.setAccountno(refdata.getString("accountno"));
@@ -119,27 +132,29 @@ public class PaymentRestController {
 
 			int refres = payimpl.getRefund(refund);
 			if (refres != 1) {
-				res.setMessage("Refund Unsuccessfully");
-				res.setStatus(400);
+				//res.setMessage("Refund Unsuccessfully");
+				//res.setStatus(400);
 				refunddata.put("transactionid", refdata.getLong("transactionid") + "");
 				refunddata.put("refundstatus", "terminated");
-				res.setData(refunddata);
+				//res.setData(refunddata);
+				return new ResponseEntity<>(refunddata, header, HttpStatus.BAD_REQUEST);
 
 			} else {
 				payimpl.updateRefundStatus(refdata.getLong("transactionid"));
-				res.setMessage("Refund Delivered Successfully");
-				res.setStatus(200);
+				//res.setMessage("Refund Delivered Successfully");
+				//res.setStatus(200);
 				refunddata.put("transactionid", refdata.getLong("transactionid") + "");
 				refunddata.put("refundstatus", "Done");
-				res.setData(refunddata);
+				//res.setData(refunddata);
+				header.add("message", "Refund Delivered Successfully");
+				return new ResponseEntity<>(refunddata, header, HttpStatus.OK);
 
 			}
-
-			return res;
 		}
-		res.setMessage("User Not Logged In");
-		res.setStatus(401);
-		return res;
+		//res.setMessage("User Not Logged In");
+		//res.setStatus(401);
+		header.add("message", "User not loged in");
+		return new ResponseEntity<>(refunddata,header,HttpStatus.UNAUTHORIZED);
 	}
 
 }

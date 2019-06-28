@@ -14,6 +14,8 @@ import com.globant.ecommerce.paymentdao.PaymentDAO;
 import com.globant.ecommerce.paymentfacade.PaymentFacade;
 import com.globant.ecommerce.paymentmodel.Payment;
 
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
 @SpringBootApplication
 public class EcommerceApplication {
 

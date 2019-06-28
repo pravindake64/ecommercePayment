@@ -16,7 +16,7 @@ import com.globant.ecommerce.paymentmodel.Refund;
 public interface PaymentDAO {
 	/**
 	 * This method is used to make payment
-	 * Pyamentmode are coded as follow  
+	 * Pyamentmodes are coded as follow  
 	 * Debit card:4
 	 * Credit card:3
 	 * Net Banking:14
